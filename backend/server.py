@@ -235,10 +235,59 @@ async def workspace_files():
 
 @app.get("/workspace/file")
 async def workspace_file(path: str):
+    """
+    Search for a file by its relative path.
+    Checks:
+      1. Legacy flat workspace (WORKSPACE_ROOT/path)
+      2. All active projects (WORKSPACE_ROOT/projects/{name}/{path})
+    """
+    # 1. Legacy flat workspace
     content = get_file_content(path)
+    if content is not None:
+        return {"path": path, "content": content}
+
+    # 2. Search all project folders
+    import os
+    projects_dir = os.path.join(WORKSPACE_ROOT, "projects")
+    if os.path.exists(projects_dir):
+        for project_name in os.listdir(projects_dir):
+            project_path = os.path.join(projects_dir, project_name)
+            if not os.path.isdir(project_path):
+                continue
+            full = os.path.join(project_path, path)
+            if os.path.exists(full):
+                try:
+                    with open(full, 'r', encoding='utf-8', errors='ignore') as f:
+                        return {"path": path, "content": f.read(), "project": project_name}
+                except:
+                    pass
+            # Also try stripping leading folder components (e.g. "src/components/X.tsx" → find in project/src/components/X.tsx)
+            # Already handled above. Try basename as fallback.
+            basename = os.path.basename(path)
+            for root, dirs, files in os.walk(project_path):
+                dirs[:] = [d for d in dirs if d not in ['node_modules', '__pycache__', '.git']]
+                if basename in files:
+                    full2 = os.path.join(root, basename)
+                    try:
+                        with open(full2, 'r', encoding='utf-8', errors='ignore') as f:
+                            return {"path": path, "content": f.read(), "project": project_name, "resolved": full2}
+                    except:
+                        pass
+
+    raise HTTPException(status_code=404, detail=f"File not found: {path}")
+
+
+@app.get("/workspace/projects/{task_id}/file")
+async def project_file_direct(task_id: str, path: str):
+    """Direct file access within a specific project."""
+    wm = get_workspace_manager()
+    project = wm.get_project(task_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    content = await project.read_file(path)
     if content is None:
-        raise HTTPException(status_code=404, detail="File not found")
-    return {"path": path, "content": content}
+        raise HTTPException(status_code=404, detail="File not found in project")
+    return {"path": path, "content": content, "project": project.name}
 
 @app.get("/workspace/projects")
 async def list_projects():
@@ -247,9 +296,56 @@ async def list_projects():
 
 @app.get("/workspace/projects/{task_id}/files")
 async def project_files(task_id: str):
+    import os
+    from workspace_manager import Project, PROJECTS
+    # Try in-memory first (active session)
     wm = get_workspace_manager()
     p = wm.get_project(task_id)
+    if not p:
+        # Scan ALL project folders on disk — match by task_id in manifest OR folder name
+        if os.path.exists(PROJECTS):
+            for folder in os.listdir(PROJECTS):
+                fpath = os.path.join(PROJECTS, folder)
+                if not os.path.isdir(fpath): continue
+                manifest_path = os.path.join(fpath, ".atoffice.json")
+                # Match by folder name
+                if folder == task_id:
+                    p = Project(folder, task_id)
+                    break
+                # Match by task_id in manifest
+                try:
+                    with open(manifest_path) as mf:
+                        import json as _j; m = _j.load(mf)
+                    if m.get("task_id") == task_id:
+                        p = Project(folder, task_id)
+                        break
+                except: pass
     if not p: raise HTTPException(status_code=404, detail="Project not found")
+    try:
+        files = p.list_files()
+        manifest = p.get_manifest()
+        return {"files": files, "manifest": manifest}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/workspace/projects/{project_name}/files-by-name")
+async def project_files_by_name(project_name: str):
+    """Fallback: load files by folder name regardless of task_id."""
+    import os
+    from workspace_manager import Project, PROJECTS
+    ppath = os.path.join(PROJECTS, project_name)
+    if not os.path.isdir(ppath):
+        raise HTTPException(status_code=404, detail="Project folder not found")
+    # Read manifest task_id if present
+    manifest_path = os.path.join(ppath, ".atoffice.json")
+    task_id = project_name
+    try:
+        with open(manifest_path) as f:
+            import json as _json
+            m = _json.load(f)
+            task_id = m.get("task_id", project_name)
+    except: pass
+    p = Project(project_name, task_id)
     return {"files": p.list_files(), "manifest": p.get_manifest()}
 
 @app.post("/workspace/projects/{task_id}/assemble")
