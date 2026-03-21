@@ -11,12 +11,10 @@ const EXT_COLORS = {
   env:'#60b860',txt:'#999',sql:'#e88840',
 }
 const AGENT_COLORS = {
-  pm:'#6878c8',product:'#3068a8',architect:'#285878',
-  designer:'#c05898',mobile:'#d07898',frontend:'#4898b8',perf:'#3878a8',
-  backend:'#508870',platform:'#288860',data:'#508888',aiml:'#8048b8',
-  analytics:'#387898',github:'#506898',infra:'#488888',security:'#a06040',
-  qa:'#b07840',sdet:'#907850',blog:'#c86878',growth:'#609848',
-  techlead:'#985858',mizu:'#6040a8',system:'#666',unknown:'#999',
+  haruto:'#6878c8', masa:'#285878',  yuki:'#c05898',
+  ren:'#4898b8',    sora:'#508870',  kaito:'#8048b8',
+  kazu:'#506898',   nao:'#a06040',   mei:'#b07840',
+  mizu:'#6040a8',   system:'#666',   unknown:'#999',
 }
 
 function FileIcon({ name }) {
@@ -138,12 +136,20 @@ export default function ProjectFileTree({ onSelectFile, selectedFile, refreshTic
           const isOpen = !!expanded[key]
           const files = filesRef.current[key] || []
 
-          // Group by top folder
+          // Group by top folder — normalize path, handle flat files and nested
           const folders = {}
           files.forEach(f => {
-            const parts = (f.path||f.name||'').replace(/\\/g,'/').split('/')
+            const rawPath = (f.path||f.name||'').replace(/\\/g,'/')
+            const parts = rawPath.split('/').filter(Boolean)
+            // If path has subdirs, group by first dir. Otherwise root ''
             const folder = parts.length > 1 ? parts[0] : ''
-            ;(folders[folder] = folders[folder]||[]).push(f)
+            ;(folders[folder] = folders[folder]||[]).push({...f, _normPath: rawPath})
+          })
+          // Sort: root files first, then folders alphabetically
+          const sortedFolders = Object.entries(folders).sort(([a],[b]) => {
+            if(a===''&&b!=='') return -1
+            if(a!==''&&b==='') return 1
+            return a.localeCompare(b)
           })
 
           return (
@@ -176,7 +182,7 @@ export default function ProjectFileTree({ onSelectFile, selectedFile, refreshTic
                       <RefreshCw size={9} style={{animation:'spin 1.5s linear infinite',opacity:0.5}}/>
                       Scanning files...
                     </div>
-                  ) : Object.entries(folders).map(([folder, folderFiles]) => (
+                  ) : sortedFolders.map(([folder, folderFiles]) => (
                     <div key={folder}>
                       {folder && (
                         <div style={{padding:'3px 10px 3px 22px',display:'flex',

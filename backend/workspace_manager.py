@@ -57,10 +57,11 @@ class Project:
         "github":    "scripts/",
     }
 
-    def __init__(self, name: str, task_id: str, command: str = ""):
+    def __init__(self, name: str, task_id: str, command: str = "", broadcast_fn=None):
         self.name = self._sanitize(name)
         self.task_id = task_id
         self.command = command
+        self._broadcast_fn = broadcast_fn
         self.path = os.path.join(PROJECTS, self.name)
         self.lock = get_project_lock(task_id)
         self.manifest_path = os.path.join(self.path, ".atoffice.json")
@@ -301,6 +302,7 @@ class WorkspaceManager:
                         p.name = folder
                         p.task_id = task_id
                         p.command = m.get("command", "")
+                        p._broadcast_fn = self._broadcast_fn
                         p.path = os.path.join(PROJECTS, folder)
                         p.lock = get_project_lock(task_id)
                         p.manifest_path = manifest_path

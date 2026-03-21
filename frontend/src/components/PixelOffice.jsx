@@ -19,9 +19,10 @@ import React, { useRef, useEffect, useMemo, useCallback } from 'react'
 const COLS = 44
 const ROWS = 28
 const SPR  = 2    // sprite logical-pixel → canvas-pixel multiplier
-// sprite logical dimensions
-const SW = 14     // sprite width  in logical px  → 28 canvas px
-const SH = 20     // sprite height in logical px  → 40 canvas px
+// sprite logical dimensions — GBA Pokemon chibi lollipop proportions (1.5x scale)
+// Head: 27×24  Body: 15×12  Legs: ~7px nubs  Total: 30×54 logical → 60×108 canvas
+const SW = 30     // sprite width  in logical px  → 60 canvas px
+const SH = 54     // sprite height in logical px  → 108 canvas px
 
 export function useOfficeTime() {
   const [h, setH] = React.useState(9)
@@ -177,224 +178,294 @@ function astar(sc,sr,gc,gr){
 }
 
 const AGENT_LOOKS = {
-  // Original 8
-  pm:        { skin: '#f5c890', hair: '#2a1808', shirt: '#4468c0', pants: '#2a3888', acc: '#e8d060' },
-  designer:  { skin: '#f8c898', hair: '#cc3388', shirt: '#d060a0', pants: '#8a2050', acc: '#ff88cc' },
-  frontend:  { skin: '#f0b880', hair: '#1a2868', shirt: '#3898b0', pants: '#1868a0', acc: '#60ccff' },
-  backend:   { skin: '#e8b070', hair: '#1a3818', shirt: '#389060', pants: '#1a6038', acc: '#60ff90' },
-  qa:        { skin: '#f5c8a0', hair: '#8a3820', shirt: '#c07838', pants: '#704010', acc: '#ff9040' },
-  blog:      { skin: '#f8d0a8', hair: '#cc8830', shirt: '#e8785a', pants: '#885030', acc: '#ffcc80' },
-  github:    { skin: '#e8c090', hair: '#183030', shirt: '#303048', pants: '#202038', acc: '#80a0ff' },
-  techlead:  { skin: '#f0b870', hair: '#2a0808', shirt: '#882828', pants: '#601818', acc: '#ff6060' },
-  // New 11
-  product:   { skin: '#f0c888', hair: '#1a2858', shirt: '#2868a8', pants: '#183870', acc: '#88ccff' },
-  architect: { skin: '#e8b870', hair: '#181828', shirt: '#205878', pants: '#102840', acc: '#60a8cc' },
-  mobile:    { skin: '#f8c0a0', hair: '#c83878', shirt: '#d05890', pants: '#801050', acc: '#ffaadd' },
-  perf:      { skin: '#e8b888', hair: '#182848', shirt: '#2878a8', pants: '#183068', acc: '#88ddff' },
-  platform:  { skin: '#e0b068', hair: '#183820', shirt: '#208858', pants: '#185030', acc: '#88ffcc' },
-  data:      { skin: '#f4c8a0', hair: '#c08830', shirt: '#b87828', pants: '#805020', acc: '#ffdd88' },
-  aiml:      { skin: '#e8b888', hair: '#281860', shirt: '#503890', pants: '#302060', acc: '#cc88ff' },
-  analytics: { skin: '#f8c898', hair: '#c83060', shirt: '#b03070', pants: '#701838', acc: '#ff88bb' },
-  infra:     { skin: '#e8b870', hair: '#181c28', shirt: '#284858', pants: '#182838', acc: '#88bbdd' },
-  security:  { skin: '#f0b870', hair: '#281010', shirt: '#902818', pants: '#601010', acc: '#ff8844' },
-  sdet:      { skin: '#f4c490', hair: '#8a3820', shirt: '#806030', pants: '#604020', acc: '#ddaa66' },
-  growth:    { skin: '#f8cca0', hair: '#c08030', shirt: '#408838', pants: '#285820', acc: '#aaff88' },
-  mizu:      { skin: '#e8c8f0', hair: '#0a0820', shirt: '#1a3050', pants: '#0a1828', acc: '#6040a8' },
+  haruto:  { skin: '#f5c890', hair: '#2a1808', shirt: '#4468c0', pants: '#2a3888', acc: '#e8d060' },
+  masa:    { skin: '#e8b870', hair: '#181828', shirt: '#205878', pants: '#102840', acc: '#60a8cc' },
+  yuki:    { skin: '#f8c898', hair: '#cc3388', shirt: '#d060a0', pants: '#8a2050', acc: '#ff88cc' },
+  ren:     { skin: '#f0b880', hair: '#1a2868', shirt: '#3898b0', pants: '#1868a0', acc: '#60ccff' },
+  sora:    { skin: '#e8b070', hair: '#1a3818', shirt: '#389060', pants: '#1a6038', acc: '#60ff90' },
+  kaito:   { skin: '#e8b888', hair: '#281860', shirt: '#503890', pants: '#302060', acc: '#cc88ff' },
+  kazu:    { skin: '#e8c090', hair: '#183030', shirt: '#303048', pants: '#202038', acc: '#80a0ff' },
+  nao:     { skin: '#f0b870', hair: '#281010', shirt: '#902818', pants: '#601010', acc: '#ff8844' },
+  mei:     { skin: '#f5c8a0', hair: '#8a3820', shirt: '#c07838', pants: '#704010', acc: '#ff9040' },
+  mizu:    { skin: '#e8c8f0', hair: '#0a0820', shirt: '#1a3050', pants: '#0a1828', acc: '#6040a8' },
 }
 
 
+
+// ─── CHIBI SPRITE — GBA Pokemon lollipop proportions (1.5x) ──────────────────
+// Layout (logical px, all scaled by SPR=2 on canvas):
+//   Head : 27 wide × 24 tall  — massive round dome
+//   Neck : 6 wide  × 3 tall
+//   Body : 15 wide × 12 tall  — stubby block
+//   Arms : 4 wide  × 7 tall
+//   Legs : 6 wide  × 7 tall   — nub stumps
+//   Feet : 6 wide  × 3 tall
+//   Total: 30 wide × 54 tall  logical → 60×108 canvas px
+//
+// Eyes: pure solid black — no white shine
 function drawSprite(ctx, wx, wy, agentId, dir, frame, sit, selected, status, t, P, scale = 1) {
   const look = AGENT_LOOKS[agentId] ?? AGENT_LOOKS.pm
-  const S = scale   // multiply all pixel sizes
-  const s = (x, y, w, h, c) => px(ctx, wx + x * S, wy + y * S, w * S, h * S, c)
+  const S = scale
+  const s = (x, y, w, h, c) => { if(!c||w<=0||h<=0) return; B(ctx, wx+x*S, wy+y*S, w*S, h*S, c) }
 
-  // Selection glow
+  // ── Selection glow ────────────────────────────────────────────────────────
   if (selected) {
     ctx.save()
-    ctx.globalAlpha = 0.25 + Math.sin(t * 4) * 0.1
-    ctx.strokeStyle = '#ffcc44'
+    ctx.globalAlpha = 0.28 + Math.sin(t * 4) * 0.1
+    ctx.strokeStyle = '#ffdd44'
     ctx.lineWidth = 2
-    ctx.strokeRect(wx - 3, wy - 2, 18 * S, 26 * S)
+    ctx.strokeRect(wx - 2, wy - 2, 32*S, 58*S)
     ctx.restore()
   }
 
-  // Ground shadow
+  // ── Ground shadow — oval under feet ───────────────────────────────────────
   ctx.save()
-  ctx.globalAlpha = 0.18
-  ctx.fillStyle = '#3a2010'
-  ctx.fillRect(wx + 1 * S, wy + 22 * S, 14 * S, 3 * S)
+  ctx.globalAlpha = 0.15
+  ctx.fillStyle = '#301808'
+  ctx.beginPath()
+  ctx.ellipse(wx + 15*S, wy + 53*S, 12*S, 3*S, 0, 0, Math.PI*2)
+  ctx.fill()
   ctx.restore()
 
-  // Idle bob (breathing)
-  const bob = (status === 'resting') ? Math.sin(t * 0.8) * 0.5
-            : (status === 'working') ? Math.sin(t * 4) * 0.3
-            : Math.sin(t * 1.5) * 0.4
+  // ── Idle bob ──────────────────────────────────────────────────────────────
+  const isResting = status === 'resting'
+  const bob = isResting          ? 0
+            : status==='working' ? Math.sin(t * 5) * 0.8
+            : Math.sin(t * 2.2) * 1.1
   ctx.save()
   ctx.translate(0, Math.round(bob))
 
-  // Walk frame: 0,2=neutral  1=left fwd  3=right fwd
-  const legL = (frame === 1) ? -2 : (frame === 3) ? 1 : 0
-  const legR = (frame === 1) ? 1  : (frame === 3) ? -2 : 0
+  // Walk leg/arm offsets
+  const lL = frame===1 ? -3 : frame===3 ?  2 : 0
+  const lR = frame===1 ?  2 : frame===3 ? -3 : 0
+  const aL = frame===1 ?  2 : frame===3 ? -2 : 0
+  const aR = frame===1 ? -2 : frame===3 ?  2 : 0
 
-  // ── BODY LAYERS ──────────────────────────────────────────────────────────
-
-  if (dir === 'down') {
-    // HEAD
-    s(3, 0, 10, 10, look.skin)
-    s(3, 0, 10, 4, look.hair)
-    // eyes
-    s(4, 5, 2, 2, '#222')
-    s(9, 5, 2, 2, '#222')
-    s(4, 4, 1, 1, '#fff')
-    s(9, 4, 1, 1, '#fff')
-    // mouth
-    s(6, 8, 4, 1, status === 'resting' ? '#cc8877' : '#cc6655')
-    // BODY
-    s(3, 10, 10, 8, look.shirt)
-    // collar
-    s(7, 10, 2, 3, '#fff')
-    // ARMS
-    s(1, 10, 3, 6, look.shirt); s(12, 10, 3, 6, look.shirt)
-    // hands
-    s(1, 16, 3, 3, look.skin); s(12, 16, 3, 3, look.skin)
-    // LEGS
-    if (sit) {
-      s(4, 18, 4, 4, look.pants); s(8, 18, 4, 4, look.pants)
-      s(4, 22, 4, 2, '#5a3820'); s(8, 22, 4, 2, '#5a3820')
-    } else {
-      s(4, 18, 3, 4 + legL, look.pants)
-      s(9, 18, 3, 4 + legR, look.pants)
-      s(4, 22 + legL, 3, 2, '#5a3820')
-      s(9, 22 + legR, 3, 2, '#5a3820')
-    }
-    // accessory (hat/bow/headset)
-    if (agentId === 'designer') s(9, -1, 5, 3, look.acc)
-    if (agentId === 'frontend') { s(3, -1, 2, 3, look.hair); s(11, -1, 2, 3, look.hair) }
-    if (agentId === 'techlead') { s(2, 4, 2, 3, look.acc); s(12, 4, 2, 3, look.acc) }
-  }
-
-  else if (dir === 'up') {
-    // back of head
-    s(3, 0, 10, 10, look.hair)
-    s(3, 4, 10, 6, look.skin)
-    // back cowlick / hair details
-    s(5, 0, 2, 2, look.hair); s(9, 0, 2, 2, look.hair)
-    // BODY (back)
-    s(3, 10, 10, 8, look.shirt)
-    s(1, 10, 3, 6, look.shirt); s(12, 10, 3, 6, look.shirt)
-    s(1, 16, 3, 3, look.skin); s(12, 16, 3, 3, look.skin)
-    if (sit) {
-      s(4, 18, 4, 4, look.pants); s(8, 18, 4, 4, look.pants)
-      s(4, 22, 4, 2, '#5a3820'); s(8, 22, 4, 2, '#5a3820')
-    } else {
-      s(4, 18, 3, 4 + legL, look.pants); s(9, 18, 3, 4 + legR, look.pants)
-      s(4, 22 + legL, 3, 2, '#5a3820'); s(9, 22 + legR, 3, 2, '#5a3820')
-    }
-  }
-
-  else if (dir === 'right') {
-    // side head
-    s(3, 0, 9, 10, look.skin)
-    s(3, 0, 9, 4, look.hair)
-    // ear
-    s(11, 5, 2, 3, look.skin)
-    // eye (only one visible)
-    s(8, 5, 2, 2, '#222'); s(8, 4, 1, 1, '#fff')
-    // mouth
-    s(9, 8, 3, 1, '#cc6655')
-    // BODY side
-    s(3, 10, 10, 8, look.shirt)
-    // far arm (back)
-    s(11, 11, 3, 5, lighten(look.shirt, -15))
-    // near arm (front)
-    s(1, 10, 3, 6, look.shirt); s(1, 16, 3, 3, look.skin)
-    if (sit) {
-      s(3, 18, 8, 4, look.pants); s(8, 22, 4, 2, '#5a3820')
-    } else {
-      const fwd = (frame === 1 || frame === 3) ? -1 : 0
-      s(5, 18, 4, 4 + legL, look.pants)
-      s(9, 18 - fwd, 4, 4 + legR, look.pants)
-      s(5, 22 + legL, 4, 2, '#5a3820')
-      s(9, 22 + legR - fwd, 4, 2, '#5a3820')
-    }
-  }
-
-  else { // left — mirror of right
+  if (isResting) {
+    // ── SLEEP — lying flat ──────────────────────────────────────────────────
+    s(0, 15, 24, 21, look.skin)        // head on side
+    s(0, 15, 24,  9, look.hair)        // hair
+    s(6,  26, 4, 2, '#2a1808')         // closed eye L
+    s(14, 26, 4, 2, '#2a1808')         // closed eye R
+    s(22, 21, 15, 9, look.shirt)       // body horizontal
+    s(33, 27,  6, 4, look.pants)       // leg 1
+    s(33, 33,  6, 4, look.pants)       // leg 2
+    s(37, 27,  4, 3, '#4a3010')        // shoe 1
+    s(37, 33,  4, 3, '#4a3010')        // shoe 2
+    // Zzz
+    const zo = ((t * 0.7) % 1) * 16
     ctx.save()
-    ctx.translate(wx + 8 * S, 0)
-    ctx.scale(-1, 1)
-    // same as right but mirrored
-    const wx2 = -8 * S
-    const rs = (x, y, w, h, c) => px(ctx, wx2 + x * S, wy + y * S, w * S, h * S, c)
-    rs(3, 0, 9, 10, look.skin); rs(3, 0, 9, 4, look.hair)
-    rs(11, 5, 2, 3, look.skin)
-    rs(8, 5, 2, 2, '#222'); rs(8, 4, 1, 1, '#fff')
-    rs(9, 8, 3, 1, '#cc6655')
-    rs(3, 10, 10, 8, look.shirt)
-    rs(11, 11, 3, 5, lighten(look.shirt, -15))
-    rs(1, 10, 3, 6, look.shirt); rs(1, 16, 3, 3, look.skin)
+    ctx.globalAlpha = 1 - (t * 0.7) % 1
+    ctx.fillStyle = '#9980cc'
+    ctx.font = `bold ${Math.round(11*S)}px sans-serif`
+    ctx.fillText('z', wx + 27*S, wy + 10*S - zo)
+    ctx.restore()
+
+  } else if (dir === 'down') {
+    // ── FRONT ───────────────────────────────────────────────────────────────
+    // Head — 27×24, centered (offset 1 from left)
+    s(1,   0, 27, 24, look.skin)
+    s(1,   0, 27,  7, look.hair)       // hair cap
+    s(1,   5,  4,  6, look.hair)       // left side wisp
+    s(24,  5,  4,  6, look.hair)       // right side wisp
+    // Eyes — pure solid black, no shine
+    s(6,  10,  5,  6, '#1a1028')       // left eye
+    s(18, 10,  5,  6, '#1a1028')       // right eye
+    // Blush
+    s(4,  16,  3,  2, '#f0a0a0')
+    s(22, 16,  3,  2, '#f0a0a0')
+    // Neck
+    s(12, 24,  6,  3, look.skin)
+    // Body
+    s(7,  27, 15, 12, look.shirt)
+    s(11, 27,  7,  3, '#fff')          // collar
+    // Arms
+    s(3,  27+aL, 4, 7, look.shirt)
+    s(22, 27+aR, 4, 7, look.shirt)
+    s(3,  34+aL, 4, 3, look.skin)      // hands
+    s(22, 34+aR, 4, 3, look.skin)
+    // Legs
     if (sit) {
-      rs(3, 18, 8, 4, look.pants); rs(8, 22, 4, 2, '#5a3820')
+      s(8,  39, 6, 6, look.pants);  s(15, 39, 6, 6, look.pants)
+      s(7,  45, 7, 3, '#4a3010');   s(14, 45, 7, 3, '#4a3010')
     } else {
-      rs(5, 18, 4, 4 + legL, look.pants); rs(9, 18, 4, 4 + legR, look.pants)
-      rs(5, 22 + legL, 4, 2, '#5a3820'); rs(9, 22 + legR, 4, 2, '#5a3820')
+      s(8,  39+lL, 6, 7, look.pants)
+      s(15, 39+lR, 6, 7, look.pants)
+      s(7,  46+lL, 7, 3, '#4a3010')
+      s(14, 46+lR, 7, 3, '#4a3010')
+    }
+    _drawAcc(ctx, s, agentId, look, 'down', t)
+
+  } else if (dir === 'up') {
+    // ── BACK ────────────────────────────────────────────────────────────────
+    s(1,   0, 27, 24, look.hair)
+    s(4,  17, 21,  7, look.skin)       // skin strip at bottom of head
+    s(11,  0,  7,  4, L(look.hair,15)) // back cowlick
+    s(12, 24,  6,  3, look.skin)
+    s(7,  27, 15, 12, look.shirt)
+    s(3,  27+aL, 4, 7, D(look.shirt,10))
+    s(22, 27+aR, 4, 7, D(look.shirt,10))
+    s(3,  34+aL, 4, 3, look.skin)
+    s(22, 34+aR, 4, 3, look.skin)
+    if (sit) {
+      s(8,  39, 6, 6, look.pants);  s(15, 39, 6, 6, look.pants)
+      s(7,  45, 7, 3, '#4a3010');   s(14, 45, 7, 3, '#4a3010')
+    } else {
+      s(8,  39+lL, 6, 7, look.pants);  s(15, 39+lR, 6, 7, look.pants)
+      s(7,  46+lL, 7, 3, '#4a3010');   s(14, 46+lR, 7, 3, '#4a3010')
+    }
+
+  } else if (dir === 'right') {
+    // ── SIDE RIGHT ──────────────────────────────────────────────────────────
+    s(2,   0, 24, 24, look.skin)
+    s(2,   0, 24,  7, look.hair)
+    s(2,   5,  4,  7, look.hair)       // back hair
+    s(24,  9,  3,  5, look.skin)       // ear
+    // One eye — pure black
+    s(14, 10,  5,  6, '#1a1028')
+    // Blush
+    s(13, 16,  3,  2, '#f0a0a0')
+    s(12, 24,  6,  3, look.skin)
+    s(5,  27, 15, 12, look.shirt)
+    // front arm swings
+    s(2,  27+aL, 4, 7, look.shirt)
+    s(2,  34+aL, 4, 3, look.skin)
+    // back arm barely visible
+    s(19, 28,    3, 5, D(look.shirt,15))
+    if (sit) {
+      s(5, 39, 12, 6, look.pants)
+      s(13, 45, 8, 3, '#4a3010')
+    } else {
+      s(7,  39+lL, 8, 7, look.pants)
+      s(11, 39+lR, 8, 7, D(look.pants,12))
+      s(6,  46+lL, 9, 3, '#4a3010')
+      s(10, 46+lR, 9, 3, '#5a3a18')
+    }
+    _drawAcc(ctx, s, agentId, look, 'right', t)
+
+  } else {
+    // ── SIDE LEFT — mirror of right ──────────────────────────────────────────
+    ctx.save()
+    ctx.translate(wx + 15*S, 0)
+    ctx.scale(-1, 1)
+    const ms = (x, y, w, h, c) => { if(!c||w<=0||h<=0) return; B(ctx, -15*S+x*S, wy+y*S, w*S, h*S, c) }
+    ms(2,   0, 24, 24, look.skin)
+    ms(2,   0, 24,  7, look.hair)
+    ms(2,   5,  4,  7, look.hair)
+    ms(24,  9,  3,  5, look.skin)
+    ms(14, 10,  5,  6, '#1a1028')
+    ms(13, 16,  3,  2, '#f0a0a0')
+    ms(12, 24,  6,  3, look.skin)
+    ms(5,  27, 15, 12, look.shirt)
+    ms(2,  27+aL, 4, 7, look.shirt)
+    ms(2,  34+aL, 4, 3, look.skin)
+    ms(19, 28,    3, 5, D(look.shirt,15))
+    if (sit) {
+      ms(5, 39, 12, 6, look.pants); ms(13, 45, 8, 3, '#4a3010')
+    } else {
+      ms(7,  39+lL, 8, 7, look.pants); ms(11, 39+lR, 8, 7, D(look.pants,12))
+      ms(6,  46+lL, 9, 3, '#4a3010'); ms(10, 46+lR, 9, 3, '#5a3a18')
     }
     ctx.restore()
   }
 
-  ctx.restore()  // end bob translation (matches outer ctx.save before direction blocks)
+  ctx.restore() // end bob
 
-  // ── STATUS ORB ───────────────────────────────────────────────────────────
-  const sc = P[status ?? 'idle'] ?? P.idle ?? '#a0a080'
-  px(ctx, wx + 11 * S, wy - 4 * S, 5 * S, 5 * S, sc)
-  px(ctx, wx + 12 * S, wy - 3 * S, 2 * S, 2 * S, 'rgba(255,255,255,0.6)')
+  // ── STATUS ORB ─────────────────────────────────────────────────────────────
+  const sc = (P && (P[status ?? 'idle'] ?? P.idle)) ?? '#a0a080'
+  B(ctx, wx + 24*S, wy - 4*S, 6*S, 6*S, sc)
+  B(ctx, wx + 25*S, wy - 3*S, 3*S, 3*S, 'rgba(255,255,255,0.45)')
 
-  // Working pulse ring
   if (status === 'working') {
-    const prog = (t * 1.5) % 1
+    const prog = (t * 1.8) % 1
     ctx.save()
-    ctx.globalAlpha = (1 - prog) * 0.5
+    ctx.globalAlpha = (1 - prog) * 0.45
     ctx.strokeStyle = sc
-    ctx.lineWidth = 1
+    ctx.lineWidth = 1.5
     ctx.beginPath()
-    ctx.arc(wx + 13 * S, wy - 1 * S, prog * 10, 0, Math.PI * 2)
+    ctx.arc(wx + 27*S, wy - 1*S, prog * 16, 0, Math.PI*2)
     ctx.stroke()
     ctx.restore()
   }
 
-  // Resting Zzz
-  if (status === 'resting') {
-    const zo = ((t * 0.6) % 1) * 10
-    ctx.save()
-    ctx.globalAlpha = 1 - (t * 0.6) % 1
-    ctx.fillStyle = '#9980cc'
-    ctx.font = `${Math.round(7 * S)}px sans-serif`
-    ctx.fillText('z', wx + 15 * S, wy - 5 * S - zo)
-    ctx.restore()
-  }
-
-  // Thinking dots
   if (status === 'thinking') {
-    const d = Math.floor(t * 2) % 3
+    const d = Math.floor(t * 2.5) % 3
     ctx.save()
     ctx.fillStyle = '#5898c0'
-    ctx.font = `${Math.round(8 * S)}px sans-serif`
-    ctx.fillText('.'.repeat(d + 1), wx + 14 * S, wy - 3 * S)
+    ctx.font = `bold ${Math.round(10*S)}px sans-serif`
+    ctx.fillText('.'.repeat(d + 1), wx + 20*S, wy - 5*S)
     ctx.restore()
   }
 
-  // ── NAME TAG ─────────────────────────────────────────────────────────────
+  // ── NAME TAG ──────────────────────────────────────────────────────────────
   const name = agentId.charAt(0).toUpperCase() + agentId.slice(1)
   const nw = name.length * 5 + 8
-  const nx = wx + 8 * S - nw / 2
-  const ny = wy + 26 * S
+  const nx = wx + 15*S - nw / 2
+  const ny = wy + 52*S + 2
   ctx.fillStyle = 'rgba(248,244,240,0.93)'
   ctx.fillRect(nx, ny, nw, 10)
   ctx.fillStyle = sc
   ctx.fillRect(nx, ny, nw, 2)
   ctx.fillStyle = '#4a3020'
-  ctx.font = `bold ${Math.round(6 * S)}px "DM Sans", sans-serif`
+  ctx.font = `bold ${Math.round(6*S)}px "DM Sans", sans-serif`
   ctx.fillText(name, nx + 3, ny + 8)
+}
+
+// ── Per-agent accessories (1.5x scaled) ──────────────────────────────────────
+function _drawAcc(ctx, s, agentId, look, dir, t) {
+  const pulse = 0.7 + Math.sin(t * 3) * 0.3
+  switch(agentId) {
+    // Bows / ribbons
+    case 'designer':   s(22, -2, 7, 4, look.acc); s(23, -1, 4, 3, L(look.acc,20)); break
+    case 'mobile':     s(22, -2, 7, 4, look.acc); break
+    case 'analytics':  s(0,  -2, 7, 4, look.acc); break
+    case 'growth':     s(21,  0, 6, 4, look.acc); break
+    // Headsets
+    case 'github':
+      if(dir==='down'){s(0,9,3,6,look.acc); s(27,9,3,6,look.acc); s(0,7,28,3,D(look.hair,5))}
+      break
+    case 'platform':
+      if(dir==='down'){s(27,9,4,5,look.acc); s(27,10,6,3,D(look.acc,10))}
+      break
+    case 'sdet':
+      if(dir==='down'){s(0,9,3,6,look.acc); s(26,9,3,6,look.acc)}
+      break
+    // Glasses
+    case 'architect':
+      if(dir==='down'){
+        s(5,12,7,4,'rgba(160,220,255,0.25)')
+        s(17,12,7,4,'rgba(160,220,255,0.25)')
+        s(5,12,7,1,look.acc); s(12,13,5,1,look.acc); s(17,12,7,1,look.acc)
+      }
+      break
+    case 'data':
+      if(dir==='down'){s(5,14,7,3,'rgba(255,220,100,0.3)'); s(17,14,7,3,'rgba(255,220,100,0.3)')}
+      break
+    case 'blog':       s(20,  0, 6, 4, look.acc); break  // hair clip
+    // Hair spikes
+    case 'frontend':   s(4,-3,3,5,look.hair); s(11,-4,4,6,look.hair); s(19,-3,4,5,look.hair); break
+    case 'perf':       s(12,-4,5,7,look.hair); s(7,-3,4,5,look.hair); break
+    case 'backend':    s(9,-3,11,4,look.hair); s(7,-4,4,6,look.hair); s(18,-4,4,6,look.hair); break
+    case 'product':    s(10,-3,9,5,look.hair); break
+    // Caps / hats
+    case 'pm':         s(4,-3,21,5,look.acc); s(3,-2,23,3,D(look.acc,15)); break
+    case 'infra':      s(3,-4,23,7,look.acc); s(3,-4,23,3,D(look.acc,20)); s(10,-4,9,2,'#fff'); break
+    case 'security':   s(4,-3,21,5,'#303030'); s(7,-3,15,2,'#606060'); break
+    case 'qa':         s(9,-2,11,4,look.acc); break  // headband
+    // Techlead headphones
+    case 'techlead':
+      if(dir==='down'){s(0,8,3,7,look.acc); s(27,8,3,7,look.acc); s(1,7,27,4,D(look.hair,5))}
+      break
+    // Mizu crown glow
+    case 'mizu':
+      if(dir==='down'){s(7,-3,15,3,look.acc); s(10,-5,9,3,L(look.acc,30))}
+      break
+    // aiml subtle aura — skip canvas direct draw, just do a tinted hair top
+    case 'aiml':
+      s(8,-2,13,3,look.acc)
+      break
+    default: break
+  }
 }
 
 
@@ -413,33 +484,22 @@ function spriteSeated(ctx,wx,wy,id,sel,status,t,C){
 
 // ─── AGENT HOME POSITIONS — all 20 agents, verified walkable tiles ────────────
 export const AGENT_HOME = {
-  // Design room (cols 1-10, rows 5-12)
-  designer:  {col:3,  row:6,  dir:'u'},
-  backend:   {col:7,  row:6,  dir:'u'},
-  product:   {col:5,  row:9,  dir:'d'},
-  architect: {col:8,  row:10, dir:'l'},
-  // Lobby — PM at table head, others scattered
-  pm:        {col:21, row:12, dir:'u'},
-  blog:      {col:15, row:12, dir:'r'},
-  github:    {col:28, row:12, dir:'l'},
-  growth:    {col:16, row:18, dir:'u'},
-  analytics: {col:26, row:18, dir:'u'},
-  platform:  {col:21, row:20, dir:'u'},
-  infra:     {col:24, row:20, dir:'l'},
-  // Dev room (cols 33-43, rows 1-12)
-  frontend:  {col:36, row:6,  dir:'u'},
-  qa:        {col:40, row:6,  dir:'u'},
-  mobile:    {col:38, row:9,  dir:'d'},
-  perf:      {col:35, row:10, dir:'r'},
-  sdet:      {col:41, row:10, dir:'l'},
-  // TechLead room (cols 1-10, rows 15-27)
-  techlead:  {col:5,  row:19, dir:'u'},
-  data:      {col:3,  row:22, dir:'r'},
-  aiml:      {col:7,  row:22, dir:'l'},
-  security:  {col:5,  row:24, dir:'u'},
-  // Mizu — lobby center, near PM
-  mizu:      {col:22, row:14, dir:'d'},
+  // Design room (cols 1-10)
+  masa:    {col:3,  row:6,  dir:'u'},
+  yuki:    {col:7,  row:6,  dir:'u'},
+  // Lobby center
+  haruto:  {col:21, row:12, dir:'u'},
+  sora:    {col:16, row:12, dir:'r'},
+  kaito:   {col:26, row:12, dir:'l'},
+  kazu:    {col:21, row:20, dir:'u'},
+  nao:     {col:24, row:20, dir:'l'},
+  // Dev room (cols 33-43)
+  ren:     {col:37, row:6,  dir:'u'},
+  mei:     {col:40, row:9,  dir:'d'},
+  // Mizu — lobby center
+  mizu:    {col:22, row:14, dir:'d'},
 }
+
 
 // ─── INTERACTABLE OBJECTS ─────────────────────────────────────────────────────
 // Each entry: tile col/row the NPC walks to, pixel draw coords, and interaction data

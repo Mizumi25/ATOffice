@@ -85,38 +85,18 @@ def init_db():
     );
     """)
 
-    # All 19 agents + techlead
+    # 10-agent merged roster
     agents = [
-        # Leadership
-        {"id":"pm",        "name":"Haruto",  "emoji":"👨‍💼","role":"Chief of Staff / PM",       "salary":9500,"mood":"focused",    "px":400,"py":200},
-        {"id":"product",   "name":"Hiro",    "emoji":"📊", "role":"Product Manager",            "salary":9000,"mood":"analytical","px":200,"py":180},
-        {"id":"architect", "name":"Masa",    "emoji":"🏗️", "role":"Solutions Architect",        "salary":9500,"mood":"focused",   "px":600,"py":180},
-        # Design
-        {"id":"designer",  "name":"Yuki",    "emoji":"👩‍🎨","role":"Design Lead",                "salary":8000,"mood":"creative",  "px":150,"py":320},
-        {"id":"mobile",    "name":"Reo",     "emoji":"📱", "role":"Mobile Engineer",            "salary":8000,"mood":"focused",   "px":280,"py":320},
-        # Frontend
-        {"id":"frontend",  "name":"Ren",     "emoji":"👨‍💻","role":"Frontend Engineer",          "salary":8000,"mood":"focused",   "px":520,"py":320},
-        {"id":"perf",      "name":"Kai",     "emoji":"⚡", "role":"Web Performance Engineer",   "salary":7500,"mood":"analytical","px":650,"py":320},
-        # Backend
-        {"id":"backend",   "name":"Sora",    "emoji":"👩‍💻","role":"Backend Engineer",           "salary":8000,"mood":"neutral",   "px":150,"py":460},
-        {"id":"platform",  "name":"Kenta",   "emoji":"🔌", "role":"Platform Engineer",          "salary":8500,"mood":"focused",   "px":280,"py":460},
-        # Data & AI
-        {"id":"data",      "name":"Daisuke", "emoji":"🗄️", "role":"Data Engineer",              "salary":8500,"mood":"analytical","px":400,"py":460},
-        {"id":"aiml",      "name":"Kaito",   "emoji":"🤖", "role":"AI/ML Engineer",             "salary":9000,"mood":"creative",  "px":520,"py":460},
-        {"id":"analytics", "name":"Aiko",    "emoji":"📈", "role":"Analytics Engineer",         "salary":7500,"mood":"analytical","px":650,"py":460},
-        # DevOps / Infra
-        {"id":"github",    "name":"Kazu",    "emoji":"🐙", "role":"DevOps / CI-CD",             "salary":7500,"mood":"focused",   "px":150,"py":580},
-        {"id":"infra",     "name":"Sota",    "emoji":"☁️", "role":"Cloud / Infrastructure",     "salary":8500,"mood":"focused",   "px":280,"py":580},
-        {"id":"security",  "name":"Nao",     "emoji":"🔐", "role":"Security Engineer",          "salary":8000,"mood":"analytical","px":400,"py":580},
-        # QA
-        {"id":"qa",        "name":"Mei",     "emoji":"🔍", "role":"QA Lead",                   "salary":7000,"mood":"analytical","px":520,"py":580},
-        {"id":"sdet",      "name":"Taro",    "emoji":"🧪", "role":"SDET / Automation",          "salary":7500,"mood":"focused",   "px":650,"py":580},
-        # Content
-        {"id":"blog",      "name":"Hana",    "emoji":"✍️", "role":"Technical Writer",           "salary":6500,"mood":"creative",  "px":340,"py":680},
-        {"id":"growth",    "name":"Yuna",    "emoji":"🌱", "role":"Growth / SEO",               "salary":7000,"mood":"creative",  "px":460,"py":680},
-        # Tech Lead
-        {"id":"techlead",  "name":"Riku",    "emoji":"🎯", "role":"Tech Lead / Architect",      "salary":9500,"mood":"analytical","px":400,"py":350},
-        {"id":"mizu",      "name":"Mizu",    "emoji":"🌊", "role":"Staff Integration Engineer",  "salary":11000,"mood":"focused",   "px":400,"py":420},
+        {"id":"haruto","name":"Haruto","emoji":"👨‍💼","role":"Director / PM + Product",         "salary":11000,"mood":"focused",    "px":400,"py":200},
+        {"id":"masa",  "name":"Masa",  "emoji":"🏗️", "role":"Architect + Data",                "salary":11000,"mood":"analytical","px":200,"py":180},
+        {"id":"yuki",  "name":"Yuki",  "emoji":"✨",  "role":"Design + Frontend",               "salary":10000,"mood":"creative",  "px":600,"py":180},
+        {"id":"ren",   "name":"Ren",   "emoji":"📱",  "role":"Mobile + Performance",            "salary":10000,"mood":"focused",   "px":150,"py":320},
+        {"id":"sora",  "name":"Sora",  "emoji":"⚙️", "role":"Backend + Platform",              "salary":10500,"mood":"neutral",   "px":520,"py":320},
+        {"id":"kaito", "name":"Kaito", "emoji":"🤖", "role":"AI/ML + Analytics",               "salary":10500,"mood":"creative",  "px":280,"py":320},
+        {"id":"kazu",  "name":"Kazu",  "emoji":"🚀", "role":"DevOps + Infrastructure",         "salary":10000,"mood":"focused",   "px":150,"py":460},
+        {"id":"nao",   "name":"Nao",   "emoji":"🛡️", "role":"Security + E2E Testing",          "salary":10000,"mood":"analytical","px":400,"py":460},
+        {"id":"mei",   "name":"Mei",   "emoji":"🔍", "role":"QA + Docs",                       "salary":9500, "mood":"analytical","px":650,"py":460},
+        {"id":"mizu",  "name":"Mizu",  "emoji":"🌊", "role":"Integration + TechLead + Growth", "salary":13000,"mood":"focused",   "px":400,"py":350},
     ]
 
     for a in agents:
