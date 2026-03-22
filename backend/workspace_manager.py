@@ -165,6 +165,10 @@ class Project:
             written.append(subpath)
         return written
 
+    async def write_files_from_agent(self, file_list: list, agent_id: str) -> list:
+        """Alias for write_files_from_structured — used throughout agent.py."""
+        return await self.write_files_from_structured(file_list, agent_id)
+
     async def read_file(self, subpath: str) -> str | None:
         full = os.path.join(self.path, subpath)
         if os.path.exists(full):
