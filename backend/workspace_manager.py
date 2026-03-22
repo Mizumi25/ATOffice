@@ -160,6 +160,8 @@ class Project:
             folder = f.get("path", self.ROLE_FOLDERS.get(agent_id, f"{agent_id}/"))
             if not folder.endswith("/"):
                 folder += "/"
+            # Safety: strip leading slashes so os.path.join doesn't escape project root
+            folder = folder.lstrip("/")
             subpath = f"{folder}{f['filename']}"
             await self.write_file(subpath, f["content"], agent_id)
             written.append(subpath)

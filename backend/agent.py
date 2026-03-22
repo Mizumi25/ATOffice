@@ -588,86 +588,29 @@ def _get_fallback_pool():
     return _FALLBACK_POOL
 
 FILE_OUTPUT_SYSTEM = """
-OUTPUT FORMAT — return ONLY valid JSON, no markdown, no preamble:
+You are an expert software engineer. Your ONLY job is to output complete, production-ready files.
 
-{"message":"1 sentence in your voice","files":[{"filename":"exact-name.ext","path":"folder/","content":"COMPLETE FILE HERE"}]}
+OUTPUT FORMAT — return a single raw JSON object, no markdown, no preamble:
+{
+  "message": "one sentence describing what you built",
+  "files": [
+    {
+      "filename": "example.tsx",
+      "path": "src/components/",
+      "content": "FULL FILE CONTENT HERE — never truncate"
+    }
+  ]
+}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-NON-NEGOTIABLE RULES — violating any of these makes your output worthless:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-1. RAW JSON ONLY. No ```json. No text before {. No text after }.
-   ATOffice builds PREMIUM software. Imagine the client is a YC startup that just
-   raised $10M and is comparing your work to Vercel and Linear's websites.
-   Every UI must look and feel like it belongs on Awwwards.com.
-2. COMPLETE FILES ONLY. Not skeletons. Not stubs. Not templates with TODO.
-   If you can't fit the whole file, write the most critical parts COMPLETELY
-   rather than writing everything partially. One complete function > ten stubs.
-3. REAL IMPLEMENTATIONS. Every function has a body. Every route has logic.
-   Every component renders something real. If it's a form, it submits. If it's
-   a list, it renders items. If it's an animation, it actually animates.
-4. CORRECT STACK. Read the project context. If it's a Next.js project, produce
-   Next.js files. If it's Laravel, produce PHP. Don't produce React Native for
-   a web project. Don't produce Python for a Node.js backend.
-5. REAL DEPENDENCIES. Every import must be a real package. Every package.json
-   dependency must have its correct current version number.
-6. NO LOREM IPSUM. Real copy. Real content. Real data. Write as if this is
-   going to a real client tomorrow morning.
-7. TAILWIND CLASSES MUST BE COMPLETE. Not className="hero" — that's CSS, not
-   Tailwind. Use: className="min-h-screen flex items-center justify-center
-   bg-gradient-to-br from-pink-50 to-rose-100 px-4 py-20"
-8. GSAP ANIMATIONS MUST BE REAL. Not gsap.to('.hero', {opacity:1}). That's
-   nothing. Write: ScrollTrigger scroll-linked parallax, stagger reveals on
-   viewport entry, FLIP animations, SplitText character animations, pinned
-   scroll sections, cursor followers, magnetic buttons, morphing SVGs.
-   Every scroll interaction must feel deliberate and crafted.
-9. PRODUCE 1-2 FILES MAX per call but make them MASSIVE (300-800+ lines each).
-   Quality and completeness over quantity.
-10. message field: one sentence, in character, specific about what you wrote.
-
-VISUAL DESIGN STANDARD — AWWWARDS LEVEL:
-ATOffice is a premium product. Every frontend output must meet this bar:
-- Typography: custom variable fonts, tight tracking on headlines (-0.04em),
-  fluid type scale using clamp(). Never default system fonts.
-- Spacing: generous whitespace. Hero sections min 100vh. Sections 120px+ gaps.
-- Colors: intentional palette. One hero color (deep, saturated), pure white/black,
-  one accent. Never default Tailwind colors — always custom hex values.
-- Motion: every interactive element has micro-animations (hover, focus, tap).
-  Page transitions. Scroll-driven reveals. Nothing is static.
-- Layout: asymmetric grids, overlapping elements, bold typography as layout.
-  Think: Linear.app, Vercel.com, Luma.events, Framer.com.
-- Dark mode: designed, not just inverted. Separate color tokens for dark.
-- Images: always with aspect ratios, blur placeholders, WebP format.
-- Buttons: custom — not default Tailwind, not `rounded-md bg-blue-500`.
-  Pill shapes, outlined with hover fill, ghost with line animation.
-- Cards: depth with subtle shadow (not `shadow-md`), backdrop-blur, borders.
-- NO GENERIC UI: No "Click here", no "Submit", no plain nav links.
-  Every element earns its place.
-
-PRODUCTION STANDARDS (non-negotiable for shipped code):
-P1. STRUCTURED LOGGING: Every backend file must use structured JSON logging.
-    Python: import logging; logger = logging.getLogger(__name__)
-    Node: import pino; const logger = pino({ level: "info" })
-    Every error must be logged with context: logger.error("msg", {"user_id": id, "error": str(e)})
-P2. ERROR HANDLING: Every async function must have try/catch/except.
-    Every API error response must include: {"error": "msg", "code": "ERROR_CODE", "request_id": "uuid"}
-P3. API VERSIONING: All routes must be under /api/v1/. Not /api/. Not /user/. /api/v1/users/.
-P4. DATABASE RESILIENCE: Connection must have retry logic and pool configuration.
-    Timeout, max_connections, retry_on_failure — always configured.
-P5. COMMENTS & DOCS: Every function/method needs a docstring/JSDoc comment.
-    Every complex algorithm needs inline comments explaining WHY, not what.
-P6. GRACEFUL SHUTDOWN: Servers must handle SIGTERM and drain in-flight requests.
-P7. HEALTH ENDPOINT: Every server must implement GET /health returning
-    {"status": "ok", "version": "1.0.0", "uptime": seconds, "db": "connected"}
-P8. COMMENTS ARE MANDATORY. Every function needs a docstring/JSDoc explaining:
-    - What it does (1 line)
-    - Parameters and return value
-    - Any side effects or important caveats
-    Inline comments on any non-obvious logic (WHY, not what).
-P9. TYPED EVERYTHING. Python: type hints on all functions. TypeScript: no `any`.
-    No implicit any, no untyped function parameters, no missing return types.
-P10. CONSTANTS NAMED. No magic numbers. No hardcoded strings in logic.
-    BAD: if retries > 3    GOOD: MAX_RETRIES = 3; if retries > MAX_RETRIES
+CRITICAL RULES:
+1. NEVER truncate. NEVER use "// ... rest of implementation" or "// TODO". Write every line.
+2. Every file must be COMPLETE and RUNNABLE as-is.
+3. path must NOT start with /. Use "src/components/" not "/src/components/".
+4. Minimum 150 lines per component file. Minimum 80 lines per config file.
+5. All imports must be real — no placeholder imports.
+6. For React/TSX: export a working default component with real JSX, real props, real logic.
+7. For Python: include all imports, all route handlers, all models — nothing stubbed.
+8. If you run out of space mid-file, finish the current function/block, then stop cleanly.
 """
 
 
@@ -1272,7 +1215,7 @@ The config is the design system foundation. Make it a real config, not a templat
 
 REQUIRED:
 - colors: custom palette with 50-950 shades. Primary, accent, neutral, muted, background.
-  NEVER just `primary: "#0070f3"` — full scale: primary: { 50: "#f0f9ff", ..., 950: "#0c1a2e" }
+  NEVER just `primary: "#0070f3"` — full scale: primary: {{ 50: "#f0f9ff", ..., 950: "#0c1a2e" }}
 - fontFamily: ["Inter var", "Geist", or project-specific font] + fallbacks
 - Custom keyframes (use exact syntax in your tailwind.config.ts):
   shimmer: from 200% to -200% background-position (for skeleton loading)
@@ -1646,7 +1589,7 @@ FILE 1: SECURITY.md (200+ lines):
 - OWASP Top 10 review — for EACH item, whether this project is affected and how
 - Findings table:
   | Severity | Issue | Location | Evidence | Remediation |
-  | CRITICAL | SQL injection | api/routes.py:45 | f"SELECT * WHERE id={user_id}" | Use parameterized query |
+  | CRITICAL | SQL injection | api/routes.py:45 | f"SELECT * WHERE id={{user_id}}" | Use parameterized query |
 - Positive findings (what's done right)
 - Remediation priority order
 
@@ -2281,8 +2224,8 @@ POSTHOG_KEY=phc_...
         probes = [
             ("node", "node --version 2>&1"),
             ("npm", "npm --version 2>&1"),
-            ("python3", "python3 --version 2>&1"),
-            ("pip", "pip3 --version 2>&1"),
+            ("python3", "python3 --version 2>&1 || python --version 2>&1"),
+            ("pip", "pip3 --version 2>&1 || pip --version 2>&1"),
             ("php", "php --version 2>&1 | head -1"),
             ("composer", "composer --version 2>&1 | head -1"),
             ("go", "go version 2>&1"),
@@ -2340,13 +2283,20 @@ POSTHOG_KEY=phc_...
 
         # Python syntax check — sora, masa, kaito, nao
         if self.id in ("sora", "masa", "kaito", "nao"):
-            if not env_caps.get("python3"):
-                await self.say("⚠️ python3 not available — skipping syntax check.", "all", "status")
+            # Termux uses "python" not "python3" — detect which one works
+            _py_bin = "python3" if env_caps.get("python3") else None
+            if _py_bin is None:
+                # Try bare "python" as Termux fallback
+                _py_check = await project.run_command("python --version 2>&1", timeout=5)
+                if _py_check.get("returncode") == 0:
+                    _py_bin = "python"
+            if not _py_bin:
+                logger.info(f"[{self.id}] Python not found in workspace env — skipping syntax check")
             else:
                 py_files = [f for f in written if f.endswith(".py") and not f.endswith("test.py")]
                 for pf in py_files[:3]:
                     full = os.path.join(project.path, pf)
-                    out = await project.run_command(f"python3 -m py_compile {full} 2>&1", timeout=15)
+                    out = await project.run_command(f"{_py_bin} -m py_compile {full} 2>&1", timeout=15)
                     if out.get("returncode") == 0:
                         checks_run.append(f"✅ {pf}: syntax OK")
                     else:
@@ -2608,9 +2558,35 @@ POSTHOG_KEY=phc_...
                     (parsed.get("message", "") or "")
                 )[-1600:]
             return parsed
-        ext_map = {"haruto":"md","masa":"md","yuki":"tsx","ren":"tsx","sora":"py","kaito":"py","kazu":"yml","nao":"ts","mei":"py","mizu":"md"}
-        ext = ext_map.get(self.id, "md")
-        return {"message": "Here's my output!", "files": [{"filename": f"{self.id}_output.{ext}", "path": "", "content": raw}]}
+        # Last-resort: try to extract named code blocks from the raw response
+        import re as _re_blob
+        extracted = []
+        ext_map2 = {"haruto":"md","masa":"md","yuki":"tsx","ren":"tsx","sora":"py",
+                    "kaito":"py","kazu":"yml","nao":"ts","mei":"py","mizu":"md"}
+        lang_ext  = {"python":"py","typescript":"ts","tsx":"tsx","jsx":"jsx",
+                     "javascript":"js","yaml":"yml","json":"json","css":"css","html":"html"}
+        for _m in _re_blob.finditer(r'```([a-zA-Z0-9]*)\n([\s\S]*?)```', raw):
+            _lang = _m.group(1).lower()
+            _code = _m.group(2).strip()
+            if not _code or len(_code) < 50:
+                continue
+            _ext  = lang_ext.get(_lang, ext_map2.get(self.id, "md"))
+            _fname = f"{self.id}_{len(extracted)+1}.{_ext}"
+            # Try to get filename from first comment line
+            _first = _code.split("\n")[0]
+            _cm = _re_blob.match(r'^(?://|#)\s*(?:File|filename)?:?\s*([\w./-]+\.\w+)', _first)
+            if _cm:
+                _fname = _cm.group(1).rsplit("/", 1)[-1]
+                _fpath = _cm.group(1).rsplit("/", 1)[0] + "/" if "/" in _cm.group(1) else f"{self.id}/"
+            else:
+                _fpath = f"{self.id}/"
+            extracted.append({"filename": _fname, "path": _fpath, "content": _code})
+        if extracted:
+            logger.info(f"[{self.id}] Blob recovery: extracted {len(extracted)} code blocks")
+            return {"message": f"Extracted {len(extracted)} files.", "files": extracted}
+                # Absolute last resort — save raw as readable file
+        agent_ext = ext_map.get(self.id, "md")
+        return {"message": "Here's my output!", "files": [{"filename": f"{self.id}_output.{agent_ext}", "path": f"{self.id}/", "content": raw}]}
 
     async def _self_review(self, files: list, project_name: str, task_title: str) -> list:
         """
@@ -2698,7 +2674,7 @@ POSTHOG_KEY=phc_...
                     line_count = content_str.count("\n") + 1
 
                     # Multi-pass: if file is short, ask agent to extend it
-                    if line_count < 80 and f["filename"].endswith((".tsx",".ts",".py",".php",".js")):
+                    if line_count < 150 and f["filename"].endswith((".tsx",".ts",".py",".php",".js",".jsx",".css")):
                         extend_prompt = (
                             f"You wrote {f['filename']} ({line_count} lines) but it needs to be more complete.\n"
                             f"Current content:\n{content_str[:1500]}\n\n"
@@ -2857,8 +2833,9 @@ POSTHOG_KEY=phc_...
                     if pip_check.get("returncode") != 0:
                         run_summary += "\n⚠️ pip3 not found — install Python: pkg install python (Termux)"
                     else:
+                        _pip = "pip3" if (await project.run_command("pip3 --version 2>&1", timeout=3)).get("returncode") == 0 else "pip"
                         pip_out = await project.run_command(
-                            "pip3 install -r requirements.txt --break-system-packages -q 2>&1 | tail -3", timeout=90
+                            f"{_pip} install -r requirements.txt --break-system-packages -q 2>&1 | tail -3", timeout=90
                         )
                         if pip_out.get("returncode") == 0:
                             run_summary += "\n✅ pip install succeeded"
@@ -3026,6 +3003,23 @@ echo "PUSH_DONE"
                 except Exception:
                     pass
 
+            # Fallback checklist if LLM parsing failed
+            if not checklist:
+                logger.warning(f"[{self.id}] Checklist parse failed, using full default frontend checklist")
+                checklist = [
+                    {"filename": "tailwind.config.js",      "path": "",                    "description": "Full Tailwind config: sakura color palette (50-950 shades), custom fonts, GSAP animation keyframes, custom spacing, shadows"},
+                    {"filename": "index.css",               "path": "src/",                "description": "Global CSS: CSS variables, sakura color tokens, dark mode, scrollbar, typography, animations keyframes"},
+                    {"filename": "App.tsx",                  "path": "src/",                "description": "Root app with React Router v6: routes for Home, About, Work, Contact, CMS dashboard"},
+                    {"filename": "HomePage.tsx",             "path": "src/pages/",          "description": "Home page: Hero, FeaturedWork, Skills, Testimonials, Contact sections with GSAP ScrollTrigger"},
+                    {"filename": "AboutPage.tsx",            "path": "src/pages/",          "description": "About page: Bio, Timeline, Values, Stack, Awards sections"},
+                    {"filename": "WorkPage.tsx",             "path": "src/pages/",          "description": "Work/Portfolio page: ProjectGrid, ProjectFilter, FeaturedProject, CaseStudy, CTA sections"},
+                    {"filename": "ContactPage.tsx",          "path": "src/pages/",          "description": "Contact page: ContactForm, SocialLinks, Location, FAQ, Newsletter sections"},
+                    {"filename": "HeroSection.tsx",          "path": "src/components/",     "description": "Full-viewport hero: sakura petal SVG animation, GSAP SplitText headline, magnetic CTA button, parallax floating elements"},
+                    {"filename": "Navbar.tsx",               "path": "src/components/",     "description": "Sticky nav: logo, links, dark mode toggle, mobile hamburger, GSAP entrance animation"},
+                    {"filename": "ProjectCard.tsx",          "path": "src/components/",     "description": "Portfolio project card: image with online fallback, hover reveal, tags, GSAP reveal on scroll"},
+                    {"filename": "SakuraPetals.tsx",         "path": "src/components/",     "description": "Ambient sakura petal particle animation using GSAP and SVG, falls across viewport"},
+                    {"filename": "CMSDashboard.tsx",         "path": "src/pages/",          "description": "Sara CMS dashboard: list/edit/publish pages and sections, image upload, live preview toggle"},
+                ]
             if checklist:
                 await self.set_activity("⚡ writing frontend files...")
                 hint = get_role_hint("yuki", desc or title)
@@ -3302,7 +3296,7 @@ class AgentOrchestrator:
         self.loop_running = True; tick = 0
         while self.loop_running:
             try:
-                tick += 1; await asyncio.sleep(20)
+                tick += 1; await asyncio.sleep(5)
                 await self._process_tasks()
                 if self.busy: continue
                 # Standup every 9 ticks = 3min (same as organic chat — alternates)
@@ -3782,15 +3776,28 @@ class AgentOrchestrator:
                 await asyncio.sleep(1.5); await a.set_status("meeting")
                 expertise = AGENT_EXPERTISE.get(a.id, [a.role])
                 mood_hint = f"[mood: {a._mood}]" if hasattr(a, "_mood") else ""
+                # Fetch actual task state for this agent so standup is grounded in reality
+                from db import get_db as _get_db
+                _db = _get_db()
+                _agent_tasks = _db.execute(
+                    "SELECT title, status, output FROM tasks WHERE assigned_to=? ORDER BY updated_at DESC LIMIT 5",
+                    (aid,)
+                ).fetchall()
+                _db.close()
+                _task_ctx = "\n".join(
+                    f"  - [{t['status'].upper()}] {t['title'][:60]}" + (f" — output: {t['output'][:80]}" if t['output'] else " — no output yet")
+                    for t in _agent_tasks
+                ) if _agent_tasks else "  - No tasks assigned yet."
                 upd = await a.think(
                     f"CHAT:\n{self.get_log()}\n\n"
                     f"STANDUP {mood_hint}\n"
                     f"Your expertise: {', '.join(expertise[:3])}\n"
+                    f"YOUR ACTUAL TASK STATUS (use ONLY this — do NOT invent completions):\n{_task_ctx}\n\n"
                     f"Give your standup update in 2-3 sentences:\n"
-                    f"1. What did you complete? (name specific files, be proud)\n"
-                    f"2. What\'s next on your plate?\n"
-                    f"3. Any blockers or things you need from another agent?\n"
-                    f"Be real. Be specific. Stay in character."
+                    f"1. What have you ACTUALLY completed per the task list above? If nothing is completed, say so honestly.\n"
+                    f"2. What are you currently working on or what is next?\n"
+                    f"3. Any blockers?\n"
+                    f"IMPORTANT: Do NOT claim files or work that are not in your task list above. Be honest."
                 )
                 await a.say(upd, "haruto", "meeting"); await a.set_status("idle")
             await asyncio.sleep(2); await pm.set_status("meeting")
